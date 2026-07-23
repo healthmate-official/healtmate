@@ -6,7 +6,7 @@ function CircularScore({ score, max = 100 }) {
   const progress = (score / max) * circumference;
 
   return (
-    <div className="relative flex h-32 w-32 items-center justify-center">
+    <div className="relative flex h-28 w-28 shrink-0 items-center justify-center sm:h-32 sm:w-32">
       <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
         <circle cx="50" cy="50" r={radius} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="8" />
         <circle
@@ -21,7 +21,7 @@ function CircularScore({ score, max = 100 }) {
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="text-3xl font-bold text-white">{score}</span>
+        <span className="text-2xl font-bold text-white sm:text-3xl">{score}</span>
         <span className="text-xs text-teal-50">/ {max}</span>
       </div>
     </div>
@@ -30,8 +30,8 @@ function CircularScore({ score, max = 100 }) {
 
 export default function HealthScoreCard({ score, completion, insight, onAskAI, onViewRoutine }) {
   return (
-    <div className="grid grid-cols-1 gap-6 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 p-6 text-white sm:grid-cols-[auto_1fr] sm:items-center">
-      <div className="flex items-center gap-6">
+    <div className="grid grid-cols-1 gap-6 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 p-5 text-white sm:p-6 lg:grid-cols-[auto_1fr] lg:items-center">
+      <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:gap-6 sm:text-left">
         <CircularScore score={score} />
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-teal-100">
@@ -40,7 +40,7 @@ export default function HealthScoreCard({ score, completion, insight, onAskAI, o
           <p className="text-xl font-bold">Health Score</p>
           <p className="mt-0.5 text-sm text-teal-50">↑ 8% better than last week</p>
 
-          <div className="mt-3 w-48">
+          <div className="mx-auto mt-3 w-full max-w-xs sm:mx-0">
             <div className="mb-1 flex items-center justify-between text-xs text-teal-50">
               <span>Daily completion</span>
               <span>{completion.pct}%</span>

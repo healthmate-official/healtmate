@@ -26,15 +26,15 @@ export default function ConsultationCard({ consultation, onJoin }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <Clock size={14} className="text-slate-400" />
+      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-1.5 text-sm text-slate-600">
+          <Clock size={14} className="shrink-0 text-slate-400" />
           <span className="font-medium text-slate-900">{consultation.scheduledTime}</span>
           <span className="text-slate-400">
             · {consultation.type} · {consultation.duration}
           </span>
         </div>
-        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-700">
+        <span className="ml-auto rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-700">
           {consultation.countdown}
         </span>
       </div>

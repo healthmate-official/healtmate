@@ -22,11 +22,11 @@ import {
   dailyCompletion,
 } from "../data/mockData";
 
-export default function Dashboard() {
+export default function Dashboard({ onOpenMenu }) {
   return (
-    <div className="min-h-screen bg-[#f6f9f8] p-6 lg:p-8">
+    <div className="min-h-screen bg-[#f6f9f8] p-4 sm:p-6 lg:p-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <Topbar user={currentUser} />
+        <Topbar user={currentUser} onOpenMenu={onOpenMenu} />
 
         <HealthScoreCard
           score={82}
