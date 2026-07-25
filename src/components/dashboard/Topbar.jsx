@@ -1,6 +1,6 @@
 import { Search, Bell, ChevronDown, Menu } from "lucide-react";
 
-export default function Topbar({ user, onOpenMenu }) {
+export default function Topbar({ user, onOpenMenu, onNavigate }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
@@ -41,6 +41,7 @@ export default function Topbar({ user, onOpenMenu }) {
 
         <button
           type="button"
+          onClick={() => onNavigate?.("profile")}
           className="flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pl-1 pr-2 hover:bg-slate-50 sm:pr-3"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-pink-500 text-sm font-semibold text-white">

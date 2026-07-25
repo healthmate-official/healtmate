@@ -95,6 +95,7 @@ export default function Sidebar({ active = "dashboard", onNavigate, user, open, 
         <div className="border-t border-slate-100 px-4 py-4">
           <button
             type="button"
+            onClick={() => handleNavigate("profile")}
             className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-slate-50"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-600 text-sm font-semibold text-white">
@@ -106,7 +107,18 @@ export default function Sidebar({ active = "dashboard", onNavigate, user, open, 
               </p>
               <p className="text-xs text-teal-600">Premium plan +</p>
             </span>
-            <Settings size={16} className="text-slate-400" />
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNavigate("settings");
+              }}
+              aria-label="Settings"
+              className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            >
+              <Settings size={16} />
+            </span>
           </button>
         </div>
       </aside>
