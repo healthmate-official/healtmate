@@ -28,7 +28,7 @@ const NAV_ITEMS = [
   { key: "settings", label: "Settings", icon: Settings },
 ];
 
-export default function Sidebar({ active = "dashboard", onNavigate, user, open, onClose }) {
+export default function Sidebar({ active = "dashboard", onNavigate, profile, open, onClose }) {
   const handleNavigate = (key) => {
     onNavigate?.(key);
     onClose?.(); // auto-close drawer on mobile after picking a page
@@ -99,13 +99,13 @@ export default function Sidebar({ active = "dashboard", onNavigate, user, open, 
             className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-slate-50"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-600 text-sm font-semibold text-white">
-              {user?.name?.[0] ?? "U"}
+              {profile?.fullName?.[0] ?? "U"}
             </span>
             <span className="flex-1">
               <p className="text-sm font-semibold text-slate-900">
-                {user?.accountName ?? "Satyam Kumar"}
+                {profile?.fullName ?? "Your Name"}
               </p>
-              <p className="text-xs text-teal-600">Premium plan +</p>
+              <p className="text-xs text-teal-600">{profile?.plan ?? "Free plan"}</p>
             </span>
             <span
               role="button"

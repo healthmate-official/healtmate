@@ -1,4 +1,4 @@
-import { Menu, Bell, Pill as PillIcon, FileBarChart, Moon, Ruler } from "lucide-react";
+import { ArrowLeft, Menu, Bell, Pill as PillIcon, FileBarChart, Moon, Ruler, LogOut } from "lucide-react";
 import { defaultSettings } from "../../data/mockData";
 import useLocalStorage from "../../hooks/useLocalStorage";
 
@@ -25,7 +25,7 @@ const ROWS = [
   { key: "darkMode", label: "Dark mode", desc: "Switch to a darker color theme", icon: Moon },
 ];
 
-export default function Settings({ onOpenMenu }) {
+export default function Settings({ onOpenMenu, onNavigate, user, signOut }) {
   const [settings, setSettings] = useLocalStorage("healthmate_settings", defaultSettings);
 
   const setKey = (key, value) => setSettings((prev) => ({ ...prev, [key]: value }));
@@ -34,6 +34,14 @@ export default function Settings({ onOpenMenu }) {
     <div className="min-h-screen bg-[#f6f9f8] p-4 sm:p-6 lg:p-8">
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => onNavigate?.("dashboard")}
+            aria-label="Back to dashboard"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+          >
+            <ArrowLeft size={18} />
+          </button>
           <button
             type="button"
             onClick={onOpenMenu}
@@ -89,6 +97,19 @@ export default function Settings({ onOpenMenu }) {
               <option>Imperial</option>
             </select>
           </div>
+        </div>
+        <div className="rounded-2xl border border-slate-100 bg-white p-5">
+          <h2 className="mb-4 text-sm font-bold text-slate-900">Account</h2>
+          <p className="mb-3 text-sm text-slate-600">
+            Logged in as <span className="font-semibold text-slate-900">{user?.email}</span>
+          </p>
+          <button
+            type="button"
+            onClick={() => signOut?.()}
+            className="flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-500 hover:bg-rose-50"
+          >
+            <LogOut size={15} /> Log out
+          </button>
         </div>
       </div>
     </div>

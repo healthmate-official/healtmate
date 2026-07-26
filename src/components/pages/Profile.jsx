@@ -1,30 +1,30 @@
 import { useState } from "react";
-import { Menu, Pencil, Check } from "lucide-react";
-import { userProfile } from "../../data/mockData";
-import useLocalStorage from "../../hooks/useLocalStorage";
+import { ArrowLeft, Menu, Pencil, Check, Loader2 } from "lucide-react";
 
 const FIELDS = [
-  { key: "fullName", label: "Full name" },
-  { key: "age", label: "Age" },
-  { key: "gender", label: "Gender" },
-  { key: "phone", label: "Phone" },
-  { key: "email", label: "Email" },
-  { key: "allergies", label: "Allergies" },
-  { key: "existingConditions", label: "Existing conditions" },
+  { key: "fullName", label: "Full name", editable: true },
+  { key: "age", label: "Age", editable: true },
+  { key: "gender", label: "Gender", editable: true },
+  { key: "phone", label: "Phone", editable: true },
+  { key: "email", label: "Email", editable: false },
+  { key: "allergies", label: "Allergies", editable: true },
+  { key: "existingConditions", label: "Existing conditions", editable: true },
 ];
 
-export default function Profile({ onOpenMenu }) {
-  const [profile, setProfile] = useLocalStorage("healthmate_profile", userProfile);
+export default function Profile({ onOpenMenu, onNavigate, profile, onUpdateProfile }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(profile);
+  const [saving, setSaving] = useState(false);
 
   const startEdit = () => {
     setDraft(profile);
     setEditing(true);
   };
 
-  const save = () => {
-    setProfile(draft);
+  const save = async () => {
+    setSaving(true);
+    await onUpdateProfile(draft);
+    setSaving(false);
     setEditing(false);
   };
 
@@ -32,6 +32,14 @@ export default function Profile({ onOpenMenu }) {
     <div className="min-h-screen bg-[#f6f9f8] p-4 sm:p-6 lg:p-8">
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => onNavigate?.("dashboard")}
+            aria-label="Back to dashboard"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+          >
+            <ArrowLeft size={18} />
+          </button>
           <button
             type="button"
             onClick={onOpenMenu}
@@ -53,7 +61,7 @@ export default function Profile({ onOpenMenu }) {
                 {profile.fullName?.[0] ?? "U"}
               </span>
               <div>
-                <p className="text-sm font-bold text-slate-900">{profile.fullName}</p>
+                <p className="text-sm font-bold text-slate-900">{profile.fullName || "Add your name"}</p>
                 <p className="text-xs text-teal-600">{profile.plan}</p>
               </div>
             </div>
@@ -61,9 +69,11 @@ export default function Profile({ onOpenMenu }) {
               <button
                 type="button"
                 onClick={save}
-                className="flex items-center gap-1.5 rounded-full bg-teal-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-teal-700"
+                disabled={saving}
+                className="flex items-center gap-1.5 rounded-full bg-teal-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
               >
-                <Check size={14} /> Save
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                {saving ? "Saving..." : "Save"}
               </button>
             ) : (
               <button
@@ -77,10 +87,10 @@ export default function Profile({ onOpenMenu }) {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {FIELDS.map(({ key, label }) => (
+            {FIELDS.map(({ key, label, editable }) => (
               <div key={key}>
                 <label className="text-xs font-medium text-slate-400">{label}</label>
-                {editing ? (
+                {editing && editable ? (
                   <input
                     type="text"
                     value={draft[key] ?? ""}

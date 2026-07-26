@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Menu, Send, Bot, User } from "lucide-react";
+import { Menu, Send, Bot, User, ArrowLeft } from "lucide-react";
 import useLocalStorage from "../../hooks/useLocalStorage";
 
 const INITIAL_MESSAGES = [
@@ -32,7 +32,7 @@ function getReply(message) {
   return "Got it — I'll keep that in mind. Once a real AI backend is connected here, I'll be able to give much more personalized answers based on your live health data.";
 }
 
-export default function AICompanion({ onOpenMenu }) {
+export default function AICompanion({ onOpenMenu, onNavigate }) {
   const [messages, setMessages] = useLocalStorage("healthmate_ai_chat", INITIAL_MESSAGES);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -61,6 +61,14 @@ export default function AICompanion({ onOpenMenu }) {
   return (
     <div className="flex h-screen flex-col bg-[#f6f9f8]">
       <div className="flex items-center gap-3 border-b border-slate-100 bg-white p-4 sm:p-5">
+        <button
+          type="button"
+          onClick={() => onNavigate?.("dashboard")}
+          aria-label="Back to dashboard"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+        >
+          <ArrowLeft size={18} />
+        </button>
         <button
           type="button"
           onClick={onOpenMenu}

@@ -1,9 +1,9 @@
-import { Menu, Wind, Play, Check } from "lucide-react";
+import { ArrowLeft, Menu, Wind, Play, Check } from "lucide-react";
 import { wellnessActivities, wellnessStreak } from "../../data/mockData";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import WellnessStreak from "../dashboard/WellnessStreak";
 
-export default function Wellness({ onOpenMenu }) {
+export default function Wellness({ onOpenMenu, onNavigate }) {
   const [completed, setCompleted] = useLocalStorage("healthmate_wellness_completed", []);
 
   const toggleComplete = (id) => {
@@ -14,6 +14,14 @@ export default function Wellness({ onOpenMenu }) {
     <div className="min-h-screen bg-[#f6f9f8] p-4 sm:p-6 lg:p-8">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => onNavigate?.("dashboard")}
+            aria-label="Back to dashboard"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+          >
+            <ArrowLeft size={18} />
+          </button>
           <button
             type="button"
             onClick={onOpenMenu}

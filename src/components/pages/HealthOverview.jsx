@@ -1,13 +1,21 @@
-import { Menu } from "lucide-react";
+import { ArrowLeft, Menu } from "lucide-react";
 import { todayMetrics, weeklyProgress } from "../../data/mockData";
 import WeeklyProgress from "../dashboard/WeeklyProgress";
 import MetricsGrid from "../dashboard/MetricsGrid";
 
-export default function HealthOverview({ onOpenMenu }) {
+export default function HealthOverview({ onOpenMenu, onNavigate }) {
   return (
     <div className="min-h-screen bg-[#f6f9f8] p-4 sm:p-6 lg:p-8">
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => onNavigate?.("dashboard")}
+            aria-label="Back to dashboard"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+          >
+            <ArrowLeft size={18} />
+          </button>
           <button
             type="button"
             onClick={onOpenMenu}

@@ -12,16 +12,41 @@ import Family from "./components/pages/Family";
 import Payments from "./components/pages/Payments";
 import Settings from "./components/pages/Settings";
 import Profile from "./components/pages/Profile";
+import Login from "./components/Login";
+import useAuth from "./hooks/useAuth";
+import useProfile from "./hooks/useProfile";
 import "./App.css";
 
 export default function App() {
+  const { session, user, loading, signOut } = useAuth();
+  const { profile, updateProfile, loading: profileLoading } = useProfile(user);
   const [active, setActive] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const openMenu = () => setSidebarOpen(true);
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f6f9f8] text-sm text-slate-400">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Login />;
+  }
+
+  if (profileLoading || !profile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f6f9f8] text-sm text-slate-400">
+        Loading your profile...
+      </div>
+    );
+  }
+
   const renderPage = () => {
-    const props = { onOpenMenu: openMenu, onNavigate: setActive };
+    const props = { onOpenMenu: openMenu, onNavigate: setActive, profile, onUpdateProfile: updateProfile, user, signOut };
     switch (active) {
       case "dashboard":
         return <Dashboard {...props} />;
@@ -63,6 +88,7 @@ export default function App() {
         onNavigate={setActive}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        profile={profile}
       />
       <main className="flex-1 overflow-y-auto">{renderPage()}</main>
     </div>

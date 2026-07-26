@@ -10,7 +10,6 @@ import MedicineReminders from "./dashboard/MedicineReminders";
 import QuickActions from "./dashboard/QuickActions";
 
 import {
-  currentUser,
   todayMetrics,
   todaysRoutine,
   medicineReminders,
@@ -30,11 +29,11 @@ const QUICK_ACTION_ROUTES = {
   breathing: "wellness",
 };
 
-export default function Dashboard({ onOpenMenu, onNavigate }) {
+export default function Dashboard({ onOpenMenu, onNavigate, profile }) {
   return (
     <div className="min-h-screen bg-[#f6f9f8] p-4 sm:p-6 lg:p-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <Topbar user={currentUser} onOpenMenu={onOpenMenu} onNavigate={onNavigate} />
+        <Topbar user={profile} onOpenMenu={onOpenMenu} onNavigate={onNavigate} />
 
         <HealthScoreCard
           score={82}
@@ -64,7 +63,7 @@ export default function Dashboard({ onOpenMenu, onNavigate }) {
           <div className="space-y-6">
             <AIHealthInsight
               insight={aiHealthInsight}
-              userName={currentUser.name}
+              userName={profile?.name}
               onAction={() => onNavigate?.("ai-companion")}
             />
             <ConsultationCard consultation={upcomingConsultation} onJoin={() => onNavigate?.("find-doctor")} />
