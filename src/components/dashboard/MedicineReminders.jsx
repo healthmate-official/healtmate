@@ -37,6 +37,9 @@ export default function MedicineReminders({ medicines, onTake, onAdd }) {
       </div>
 
       <ul className="space-y-2">
+        {medicines.length === 0 && (
+          <li className="py-4 text-center text-xs text-slate-400">No medicines added yet.</li>
+        )}
         {medicines.map((m) => {
           const Icon = ICONS[m.name.toLowerCase()] ?? Pill;
           const isMissed = m.status === "missed";

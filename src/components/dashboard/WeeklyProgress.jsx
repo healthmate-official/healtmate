@@ -3,7 +3,7 @@ export default function WeeklyProgress({ data }) {
   const width = 560;
   const height = 160;
   const padX = 8;
-  const min = 60;
+  const min = 0;
   const max = 100;
 
   const points = days.map((d, i) => {
@@ -29,7 +29,7 @@ export default function WeeklyProgress({ data }) {
       </div>
 
       <svg viewBox={`0 0 ${width} ${height + 24}`} className="mt-3 w-full" preserveAspectRatio="none">
-        {[100, 90, 80, 70, 60].map((tick) => {
+        {[100, 75, 50, 25, 0].map((tick) => {
           const y = height - ((tick - min) / (max - min)) * height;
           return (
             <g key={tick}>
