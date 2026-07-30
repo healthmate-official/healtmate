@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ArrowLeft, Menu, Plus, Pill, Trash2, Check, Clock, X as XIcon, Loader2 } from "lucide-react";
 import useSupabaseTable from "../../hooks/useSupabaseTable";
+import ConfirmDialog from "../ConfirmDialog";
+import { useToast } from "../../hooks/useToast";
 
 const STATUS_STYLE = {
   taken: "bg-teal-50 text-teal-600",
@@ -13,6 +15,8 @@ export default function Medicines({ onOpenMenu, onNavigate, user }) {
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState({ name: "", dosage: "", frequency: "" });
   const [saving, setSaving] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const { showToast, ToastElement } = useToast();
 
   const taken = medicines.filter((m) => m.status === "taken").length;
   const upcoming = medicines.filter((m) => m.status === "upcoming").length;
@@ -23,10 +27,22 @@ export default function Medicines({ onOpenMenu, onNavigate, user }) {
   const addMedicine = async () => {
     if (!form.name.trim() || !form.dosage.trim() || !form.frequency.trim()) return;
     setSaving(true);
-    await insertRow({ name: form.name, dosage: form.dosage, frequency: form.frequency, status: "upcoming" });
+    const { error } = await insertRow({ name: form.name, dosage: form.dosage, frequency: form.frequency, status: "upcoming" });
     setSaving(false);
+    if (error) {
+      showToast("Couldn't save medicine. Try again.");
+      return;
+    }
     setForm({ name: "", dosage: "", frequency: "" });
     setFormOpen(false);
+    showToast(`${form.name} added.`, "success");
+  };
+
+  const confirmDelete = async () => {
+    const target = confirmTarget;
+    setConfirmTarget(null);
+    const { error } = await deleteRow(target.id);
+    showToast(error ? "Couldn't delete medicine." : `${target.name} removed.`, error ? "error" : "success");
   };
 
   return (
@@ -179,7 +195,7 @@ export default function Medicines({ onOpenMenu, onNavigate, user }) {
                     )}
                     <button
                       type="button"
-                      onClick={() => deleteRow(m.id)}
+                      onClick={() => setConfirmTarget(m)}
                       aria-label={`Delete ${m.name}`}
                       className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-500"
                     >
@@ -192,6 +208,15 @@ export default function Medicines({ onOpenMenu, onNavigate, user }) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmTarget}
+        title={`Delete ${confirmTarget?.name}?`}
+        message="This can't be undone."
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmTarget(null)}
+      />
+      {ToastElement}
     </div>
   );
 }

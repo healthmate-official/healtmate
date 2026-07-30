@@ -1,42 +1,82 @@
 import { useState, useRef, useEffect } from "react";
 import { Menu, Send, Bot, User, ArrowLeft } from "lucide-react";
 import useLocalStorage from "../../hooks/useLocalStorage";
+import useSupabaseTable from "../../hooks/useSupabaseTable";
+import useHealthMetrics from "../../hooks/useHealthMetrics";
 
 const INITIAL_MESSAGES = [
   {
     id: "m0",
     from: "ai",
-    text: "Hi! I'm your HealthMate AI companion. Ask me about your routine, medicines, or how you're doing this week.",
+    text: "Hi! I'm your HealthMate AI companion. Ask me about your routine, medicines, or how you're doing today.",
   },
 ];
 
-const SUGGESTIONS = ["How was my sleep this week?", "Did I take all my medicines today?", "Give me a tip for better hydration"];
+const SUGGESTIONS = ["How's my hydration today?", "Did I take all my medicines today?", "What's left on my routine today?"];
 
-// Placeholder rule-based responder — swap this for a real API call
-// (OpenAI/Claude/your own backend) once one is connected. The chat UI,
-// state, and persistence below don't need to change either way.
-function getReply(message) {
+const TODAY_NAME = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][new Date().getDay()];
+
+// Rule-based responder — still not a real AI model (that step is paused
+// until there's budget for an API key), but every fact it states below
+// now comes from the person's real Supabase data instead of being
+// hardcoded, so at least what it says is true.
+function getReply(message, { medicines, todaysRoutine, todayMetrics }) {
   const m = message.toLowerCase();
+
   if (m.includes("sleep")) {
-    return "You've averaged 7h 20m of sleep this week — that's close to your 8h goal. Try shifting your wind-down routine 15 minutes earlier for a boost.";
+    if (todayMetrics?.sleep_hours) {
+      return `You logged ${todayMetrics.sleep_hours}h of sleep today. Your goal is 8h — ${
+        todayMetrics.sleep_hours >= 8 ? "nice, you hit it!" : "try shifting your wind-down routine a bit earlier."
+      }`;
+    }
+    return "You haven't logged your sleep today yet — head to Health Overview and click \"Log today\" to track it.";
   }
+
   if (m.includes("medicine") || m.includes("medication")) {
-    return "You've taken 2 of 4 medicines today. Lisinopril is upcoming at 2:00 PM, and Omega-3 was marked missed — want a reminder next time?";
+    if (medicines.length === 0) return "You don't have any medicines added yet — you can add some on the Medicines page.";
+    const taken = medicines.filter((med) => med.status === "taken").length;
+    const missed = medicines.filter((med) => med.status === "missed");
+    let reply = `You've taken ${taken} of ${medicines.length} medicines today.`;
+    if (missed.length > 0) reply += ` You missed: ${missed.map((med) => med.name).join(", ")}.`;
+    return reply;
   }
+
   if (m.includes("hydration") || m.includes("water")) {
-    return "You're at 1.8L of your 2.5L goal today. Try keeping a bottle at your desk and sipping every hour instead of drinking a lot at once.";
+    if (todayMetrics?.hydration_liters) {
+      return `You're at ${todayMetrics.hydration_liters}L of your 2.5L goal today. ${
+        todayMetrics.hydration_liters >= 2.5 ? "Goal reached!" : "Keep sipping — try keeping a bottle at your desk."
+      }`;
+    }
+    return "You haven't logged hydration today yet — log it on the Health Overview page and I can track it for you.";
   }
-  if (m.includes("routine")) {
-    return "Today's routine is 5 of 8 tasks complete. Lunch is marked 'now' — mark it done once you've eaten to keep your streak going.";
+
+  if (m.includes("routine") || m.includes("task")) {
+    if (todaysRoutine.length === 0) return `You don't have any routine tasks set for ${TODAY_NAME} yet — add some on the My Routine page.`;
+    const done = todaysRoutine.filter((r) => r.status === "done").length;
+    const remaining = todaysRoutine.filter((r) => r.status !== "done");
+    let reply = `Today's routine is ${done} of ${todaysRoutine.length} tasks complete.`;
+    if (remaining.length > 0) reply += ` Still left: ${remaining.map((r) => r.title).join(", ")}.`;
+    return reply;
   }
-  return "Got it — I'll keep that in mind. Once a real AI backend is connected here, I'll be able to give much more personalized answers based on your live health data.";
+
+  if (m.includes("steps")) {
+    if (todayMetrics?.steps) return `You've logged ${todayMetrics.steps.toLocaleString()} steps today, out of your 10,000 goal.`;
+    return "No steps logged today yet — log them on the Health Overview page.";
+  }
+
+  return "I can answer questions about your medicines, today's routine, sleep, hydration, and steps — try asking about one of those, based on what you've actually logged.";
 }
 
-export default function AICompanion({ onOpenMenu, onNavigate }) {
+export default function AICompanion({ onOpenMenu, onNavigate, user }) {
   const [messages, setMessages] = useLocalStorage("healthmate_ai_chat", INITIAL_MESSAGES);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const bottomRef = useRef(null);
+
+  const { rows: medicines } = useSupabaseTable("medicines", user);
+  const { rows: allRoutines } = useSupabaseTable("routines", user);
+  const { today: todayMetrics } = useHealthMetrics(user);
+  const todaysRoutine = allRoutines.filter((r) => r.day_of_week === TODAY_NAME);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,7 +92,7 @@ export default function AICompanion({ onOpenMenu, onNavigate }) {
     setTyping(true);
 
     setTimeout(() => {
-      const aiMsg = { id: `ai-${Date.now()}`, from: "ai", text: getReply(trimmed) };
+      const aiMsg = { id: `ai-${Date.now()}`, from: "ai", text: getReply(trimmed, { medicines, todaysRoutine, todayMetrics }) };
       setMessages((prev) => [...prev, aiMsg]);
       setTyping(false);
     }, 600);

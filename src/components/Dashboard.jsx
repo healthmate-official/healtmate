@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Sparkles } from "lucide-react";
 import Topbar from "./dashboard/Topbar";
 import HealthScoreCard from "./dashboard/HealthScoreCard";
 import MetricsGrid from "./dashboard/MetricsGrid";
@@ -55,6 +56,7 @@ export default function Dashboard({ onOpenMenu, onNavigate, profile, user }) {
   const metrics = buildMetricsGrid(todayMetricsRow);
   const weeklyProgress = buildWeeklyProgressData(weekRows);
   const wellnessStreak = buildStreakData(weekRows);
+  const isNewUser = allRoutines.length === 0 && medicines.length === 0 && weekRows.length === 0;
 
   const consultationForCard = consultation
     ? {
@@ -78,6 +80,45 @@ export default function Dashboard({ onOpenMenu, onNavigate, profile, user }) {
     <div className="min-h-screen bg-[#f6f9f8] p-4 sm:p-6 lg:p-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
         <Topbar user={profile} onOpenMenu={onOpenMenu} onNavigate={onNavigate} />
+
+        {isNewUser && (
+          <div className="rounded-2xl border border-teal-100 bg-teal-50/60 p-5">
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white">
+                <Sparkles size={16} />
+              </span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-slate-900">Welcome to HealthMate!</p>
+                <p className="mt-0.5 text-sm text-slate-600">
+                  Your dashboard is empty right now — add a few things to see it come to life.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.("medicines")}
+                    className="rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-teal-700 shadow-sm hover:bg-teal-50"
+                  >
+                    Add a medicine
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.("my-routine")}
+                    className="rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-teal-700 shadow-sm hover:bg-teal-50"
+                  >
+                    Set up your routine
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.("health-overview")}
+                    className="rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-teal-700 shadow-sm hover:bg-teal-50"
+                  >
+                    Log today's stats
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <HealthScoreCard
           score={weeklyProgress.current || dailyCompletion.pct}

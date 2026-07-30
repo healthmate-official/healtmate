@@ -1,20 +1,36 @@
 import { useState } from "react";
 import { ArrowLeft, Menu, Plus, Users, Trash2, X as XIcon, Loader2 } from "lucide-react";
 import useSupabaseTable from "../../hooks/useSupabaseTable";
+import ConfirmDialog from "../ConfirmDialog";
+import { useToast } from "../../hooks/useToast";
 
 export default function Family({ onOpenMenu, onNavigate, user }) {
   const { rows: members, loading, insertRow, deleteRow } = useSupabaseTable("family_members", user);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState({ name: "", relation: "", age: "" });
   const [saving, setSaving] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const { showToast, ToastElement } = useToast();
 
   const addMember = async () => {
     if (!form.name.trim() || !form.relation.trim()) return;
     setSaving(true);
-    await insertRow({ name: form.name, relation: form.relation, age: form.age ? Number(form.age) : null });
+    const { error } = await insertRow({ name: form.name, relation: form.relation, age: form.age ? Number(form.age) : null });
     setSaving(false);
+    if (error) {
+      showToast("Couldn't save family member. Try again.");
+      return;
+    }
     setForm({ name: "", relation: "", age: "" });
     setFormOpen(false);
+    showToast(`${form.name} added.`, "success");
+  };
+
+  const confirmDelete = async () => {
+    const target = confirmTarget;
+    setConfirmTarget(null);
+    const { error } = await deleteRow(target.id);
+    showToast(error ? "Couldn't remove family member." : `${target.name} removed.`, error ? "error" : "success");
   };
 
   return (
@@ -87,7 +103,7 @@ export default function Family({ onOpenMenu, onNavigate, user }) {
                       <p className="text-xs text-slate-400">{m.relation}{m.age ? ` · ${m.age} yrs` : ""}</p>
                     </div>
                   </div>
-                  <button type="button" onClick={() => deleteRow(m.id)} aria-label={`Remove ${m.name}`} className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-500">
+                  <button type="button" onClick={() => setConfirmTarget(m)} aria-label={`Remove ${m.name}`} className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-500">
                     <Trash2 size={14} />
                   </button>
                 </li>
@@ -96,6 +112,16 @@ export default function Family({ onOpenMenu, onNavigate, user }) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmTarget}
+        title={`Remove ${confirmTarget?.name}?`}
+        message="This can't be undone."
+        confirmLabel="Remove"
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmTarget(null)}
+      />
+      {ToastElement}
     </div>
   );
 }

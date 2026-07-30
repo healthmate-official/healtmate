@@ -2,6 +2,8 @@ import { useRef, useState } from "react";
 import { ArrowLeft, Menu, Upload, FileText, Trash2, Eye, Loader2 } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import useSupabaseTable from "../../hooks/useSupabaseTable";
+import ConfirmDialog from "../ConfirmDialog";
+import { useToast } from "../../hooks/useToast";
 
 const BUCKET = "medical-reports";
 
@@ -12,6 +14,8 @@ export default function MedicalReports({ onOpenMenu, onNavigate, user }) {
   });
   const [uploading, setUploading] = useState(false);
   const [openingId, setOpeningId] = useState(null);
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const { showToast, ToastElement } = useToast();
   const fileInputRef = useRef(null);
 
   const handleFileChange = async (e) => {
@@ -19,16 +23,14 @@ export default function MedicalReports({ onOpenMenu, onNavigate, user }) {
     if (!file) return;
     setUploading(true);
 
-    // Files are stored under a per-user folder (userId/timestamp-filename)
-    // so the storage policies (which check that folder name) can enforce
-    // that people only ever see their own files.
     const path = `${user.id}/${Date.now()}-${file.name}`;
     const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file);
 
     if (!uploadError) {
       await insertRow({ name: file.name, report_type: "Uploaded Report", file_url: path });
+      showToast(`${file.name} uploaded.`, "success");
     } else {
-      alert("Upload failed: " + uploadError.message);
+      showToast("Upload failed: " + uploadError.message);
     }
 
     setUploading(false);
@@ -41,14 +43,17 @@ export default function MedicalReports({ onOpenMenu, onNavigate, user }) {
     const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(report.file_url, 60);
     setOpeningId(null);
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-    else alert("Could not open file: " + error?.message);
+    else showToast("Could not open file: " + error?.message);
   };
 
-  const removeReport = async (report) => {
+  const confirmDelete = async () => {
+    const report = confirmTarget;
+    setConfirmTarget(null);
     if (report.file_url) {
       await supabase.storage.from(BUCKET).remove([report.file_url]);
     }
-    await deleteRow(report.id);
+    const { error } = await deleteRow(report.id);
+    showToast(error ? "Couldn't delete report." : `${report.name} deleted.`, error ? "error" : "success");
   };
 
   return (
@@ -124,7 +129,7 @@ export default function MedicalReports({ onOpenMenu, onNavigate, user }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => removeReport(r)}
+                      onClick={() => setConfirmTarget(r)}
                       aria-label={`Delete ${r.name}`}
                       className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-500"
                     >
@@ -137,6 +142,15 @@ export default function MedicalReports({ onOpenMenu, onNavigate, user }) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmTarget}
+        title={`Delete ${confirmTarget?.name}?`}
+        message="This can't be undone."
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmTarget(null)}
+      />
+      {ToastElement}
     </div>
   );
 }

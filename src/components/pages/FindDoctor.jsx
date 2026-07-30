@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, Menu, Search, Star, CalendarCheck } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import useSupabaseTable from "../../hooks/useSupabaseTable";
+import { useToast } from "../../hooks/useToast";
 
 export default function FindDoctor({ onOpenMenu, onNavigate, user }) {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const { rows: consultations, insertRow } = useSupabaseTable("consultations", user);
+  const { rows: payments, insertRow: insertPayment } = useSupabaseTable("payments", user);
+  const { showToast, ToastElement } = useToast();
 
   useEffect(() => {
     supabase
@@ -22,11 +25,22 @@ export default function FindDoctor({ onOpenMenu, onNavigate, user }) {
   const isBooked = (doctorId) => consultations.some((c) => c.doctor_id === doctorId);
 
   const bookConsultation = async (doctor) => {
-    await insertRow({
+    const { error } = await insertRow({
       doctor_id: doctor.id,
       type: "Video consultation",
       status: "requested",
     });
+    if (error) {
+      showToast("Couldn't book consultation. Try again.");
+      return;
+    }
+    // A real consultation should show up as a real charge too.
+    await insertPayment({
+      type: `Consultation - ${doctor.name}`,
+      amount: doctor.consultation_fee,
+      status: "Pending",
+    });
+    showToast(`Requested a consultation with ${doctor.name}.`, "success");
   };
 
   const filtered = doctors.filter(
@@ -118,6 +132,7 @@ export default function FindDoctor({ onOpenMenu, onNavigate, user }) {
           </div>
         )}
       </div>
+      {ToastElement}
     </div>
   );
 }
