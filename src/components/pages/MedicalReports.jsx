@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
-import { ArrowLeft, Menu, Upload, FileText, Trash2 } from "lucide-react";
+import { ArrowLeft, Menu, Upload, FileText, Trash2, Eye, Loader2 } from "lucide-react";
+import { supabase } from "../../lib/supabaseClient";
 import useSupabaseTable from "../../hooks/useSupabaseTable";
+
+const BUCKET = "medical-reports";
 
 export default function MedicalReports({ onOpenMenu, onNavigate, user }) {
   const { rows: reports, loading, insertRow, deleteRow } = useSupabaseTable("medical_reports", user, {
@@ -8,18 +11,44 @@ export default function MedicalReports({ onOpenMenu, onNavigate, user }) {
     ascending: false,
   });
   const [uploading, setUploading] = useState(false);
+  const [openingId, setOpeningId] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    // NOTE: this saves the report's metadata (name, type, date) as a real
-    // database row. It does not yet upload the actual file bytes anywhere —
-    // that needs a Supabase Storage bucket, which is a separate setup step.
-    await insertRow({ name: file.name, report_type: "Uploaded Report" });
+
+    // Files are stored under a per-user folder (userId/timestamp-filename)
+    // so the storage policies (which check that folder name) can enforce
+    // that people only ever see their own files.
+    const path = `${user.id}/${Date.now()}-${file.name}`;
+    const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file);
+
+    if (!uploadError) {
+      await insertRow({ name: file.name, report_type: "Uploaded Report", file_url: path });
+    } else {
+      alert("Upload failed: " + uploadError.message);
+    }
+
     setUploading(false);
     e.target.value = "";
+  };
+
+  const viewReport = async (report) => {
+    if (!report.file_url) return;
+    setOpeningId(report.id);
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(report.file_url, 60);
+    setOpeningId(null);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    else alert("Could not open file: " + error?.message);
+  };
+
+  const removeReport = async (report) => {
+    if (report.file_url) {
+      await supabase.storage.from(BUCKET).remove([report.file_url]);
+    }
+    await deleteRow(report.id);
   };
 
   return (
@@ -57,7 +86,8 @@ export default function MedicalReports({ onOpenMenu, onNavigate, user }) {
               disabled={uploading}
               className="flex items-center gap-1.5 rounded-full bg-teal-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
             >
-              <Upload size={14} /> {uploading ? "Saving..." : "Upload report"}
+              {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+              {uploading ? "Uploading..." : "Upload report"}
             </button>
             <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
           </div>
@@ -82,14 +112,25 @@ export default function MedicalReports({ onOpenMenu, onNavigate, user }) {
                       </p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => deleteRow(r.id)}
-                    aria-label={`Delete ${r.name}`}
-                    className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-500"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => viewReport(r)}
+                      disabled={openingId === r.id}
+                      aria-label={`View ${r.name}`}
+                      className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-teal-50 hover:text-teal-600"
+                    >
+                      {openingId === r.id ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeReport(r)}
+                      aria-label={`Delete ${r.name}`}
+                      className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-500"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
